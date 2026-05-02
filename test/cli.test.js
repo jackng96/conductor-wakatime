@@ -3,6 +3,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const cli = require("../src/cli");
+const pkg = require("../package.json");
 
 test("resolvePaths uses macOS Conductor defaults", () => {
   const home = "/Users/example";
@@ -68,7 +69,7 @@ test("buildHeartbeatFromRow creates app heartbeat from result event", () => {
     language: null,
     isWrite: false,
     project: "rag-testing",
-    projectFolder: "/Users/example/conductor/workspaces/rag-testing/london",
+    projectFolder: "/Users/example/Dev/rag-testing",
     time: 1777647380.482,
     agentType: "claude",
     branch: null,
@@ -92,7 +93,7 @@ test("buildWakatimeArgs includes Conductor plugin and event time", () => {
   assert.ok(args.includes("--write"));
   assert.deepEqual(args.slice(args.indexOf("--plugin"), args.indexOf("--plugin") + 2), [
     "--plugin",
-    "conductor/1.0.0 conductor-wakatime/0.1.0",
+    `conductor/1.0.0 conductor-wakatime/${pkg.version}`,
   ]);
   assert.deepEqual(args.slice(args.indexOf("--time"), args.indexOf("--time") + 2), [
     "--time",

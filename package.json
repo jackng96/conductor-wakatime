@@ -1,6 +1,6 @@
 {
   "name": "conductor-wakatime",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WakaTime tracking for Conductor agent sessions.",
   "homepage": "https://github.com/jackng96/conductor-wakatime#readme",
   "bugs": {
@@ -13,6 +13,9 @@
   "engines": {
     "node": ">=20"
   },
+  "os": [
+    "darwin"
+  ],
   "files": [
     "bin/",
     "src/",

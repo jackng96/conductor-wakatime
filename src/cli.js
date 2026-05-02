@@ -110,10 +110,6 @@ function deriveWorkspaceFolder(row) {
     }
   }
 
-  if (row.root_path && row.repo_name && row.directory_name) {
-    return path.join(path.dirname(path.dirname(row.root_path)), "conductor", "workspaces", row.repo_name, row.directory_name);
-  }
-
   return row.root_path || undefined;
 }
 

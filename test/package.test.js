@@ -8,6 +8,7 @@ const pkg = require("../package.json");
 test("package metadata supports safe global npm installs", () => {
   assert.equal(pkg.scripts.install, undefined);
   assert.equal(pkg.bin["conductor-wakatime"], "bin/conductor-wakatime.js");
+  assert.deepEqual(pkg.os, ["darwin"]);
   assert.deepEqual(pkg.files, [
     "bin/",
     "src/",
@@ -27,8 +28,10 @@ test("package and README keep doctor internal", () => {
 test("README teaches required WakaTime setup", () => {
   const readme = fs.readFileSync(path.join(__dirname, "..", "README.md"), "utf8");
 
+  assert.match(readme, /npm install -g conductor-wakatime/);
   assert.match(readme, /WakaTime account/);
   assert.match(readme, /~\/\.wakatime\.cfg/);
   assert.match(readme, /api_key = your-api-key-here/);
   assert.match(readme, /~\/\.wakatime\/wakatime-cli/);
+  assert.match(readme, /rerun `conductor-wakatime install`/);
 });

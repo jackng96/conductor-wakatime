@@ -13,13 +13,13 @@ WakaTime tracking for Conductor agent sessions on macOS.
 ## Download
 
 ```bash
-npm install -g git+https://github.com/jackng96/conductor-wakatime.git
+npm install -g conductor-wakatime
 ```
 
-When the package is published to npm, this becomes:
+To install directly from GitHub:
 
 ```bash
-npm install -g conductor-wakatime
+npm install -g git+https://github.com/jackng96/conductor-wakatime.git
 ```
 
 ## WakaTime Setup
@@ -49,6 +49,8 @@ The install command checks for Conductor's database, WakaTime CLI, and WakaTime 
 conductor-wakatime status
 conductor-wakatime uninstall
 ```
+
+If you upgrade Node or reinstall this package, rerun `conductor-wakatime install` so the LaunchAgent points at the current executable.
 
 ## How It Works
 
