@@ -20,7 +20,7 @@
     "LICENSE"
   ],
   "bin": {
-    "conductor-wakatime": "./bin/conductor-wakatime.js"
+    "conductor-wakatime": "bin/conductor-wakatime.js"
   },
   "type": "commonjs",
   "scripts": {

@@ -7,7 +7,7 @@ const pkg = require("../package.json");
 
 test("package metadata supports safe global npm installs", () => {
   assert.equal(pkg.scripts.install, undefined);
-  assert.equal(pkg.bin["conductor-wakatime"], "./bin/conductor-wakatime.js");
+  assert.equal(pkg.bin["conductor-wakatime"], "bin/conductor-wakatime.js");
   assert.deepEqual(pkg.files, [
     "bin/",
     "src/",
