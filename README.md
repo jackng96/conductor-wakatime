@@ -1,41 +1,31 @@
 # conductor-wakatime
 
-WakaTime tracking for Conductor agent sessions.
+WakaTime tracking for Conductor agent sessions on macOS.
 
-## Install
-
-```bash
-npm install -g conductor-wakatime
-conductor-wakatime doctor
-conductor-wakatime setup
-conductor-wakatime install
-```
-
-The `install` command creates and starts the macOS LaunchAgent. It does not run automatically during `npm install`.
-
-To install directly from GitHub before the package is published to npm:
+## Download
 
 ```bash
 npm install -g git+https://github.com/jackng96/conductor-wakatime.git
 ```
 
-## Commands
+When the package is published to npm, this becomes:
 
 ```bash
-npm run setup
-npm run install:agent
-npm run status
-npm run doctor
-npm run track:once
-npm run test:heartbeat
+npm install -g conductor-wakatime
 ```
 
-After a global install, use the CLI directly:
+## Start Tracking
+
+```bash
+conductor-wakatime install
+```
+
+The install command checks for Conductor's database, WakaTime CLI, and WakaTime config before it creates and starts the macOS LaunchAgent.
+
+## Manage
 
 ```bash
 conductor-wakatime status
-conductor-wakatime doctor
-conductor-wakatime test-heartbeat
 conductor-wakatime uninstall
 ```
 

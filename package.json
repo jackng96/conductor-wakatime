@@ -28,7 +28,6 @@
     "install:agent": "node ./bin/conductor-wakatime.js install",
     "uninstall:agent": "node ./bin/conductor-wakatime.js uninstall",
     "status": "node ./bin/conductor-wakatime.js status",
-    "doctor": "node ./bin/conductor-wakatime.js doctor",
     "track:once": "node ./bin/conductor-wakatime.js track-once",
     "test:heartbeat": "node ./bin/conductor-wakatime.js test-heartbeat",
     "pack:dry-run": "npm pack --dry-run",

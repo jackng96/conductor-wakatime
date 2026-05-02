@@ -594,17 +594,6 @@ function status(options = {}) {
   }, null, 2));
 }
 
-function doctor(options = {}) {
-  const paths = resolvePaths(options);
-  const checks = validate(paths);
-
-  console.log(JSON.stringify({
-    ...paths,
-    checks,
-  }, null, 2));
-  console.log("Setup checks passed.");
-}
-
 async function run(argv) {
   const [command] = argv;
 
@@ -621,9 +610,6 @@ async function run(argv) {
     case "status":
       status();
       return;
-    case "doctor":
-      doctor();
-      return;
     case "track-once":
       trackOnceCommand();
       return;
@@ -634,7 +620,7 @@ async function run(argv) {
       testHeartbeat();
       return;
     default:
-      console.log("Usage: conductor-wakatime <setup|install|uninstall|status|doctor|track-once|watch|test-heartbeat>");
+      console.log("Usage: conductor-wakatime <install|uninstall|status>");
   }
 }
 
