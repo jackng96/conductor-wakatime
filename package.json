@@ -1,0 +1,21 @@
+{
+  "name": "conductor-wakatime",
+  "version": "0.1.0",
+  "description": "WakaTime tracking for Conductor agent sessions.",
+  "bin": {
+    "conductor-wakatime": "./bin/conductor-wakatime.js"
+  },
+  "type": "commonjs",
+  "scripts": {
+    "status": "node ./bin/conductor-wakatime.js status",
+    "doctor": "node ./bin/conductor-wakatime.js doctor",
+    "test": "node --test"
+  },
+  "keywords": [
+    "conductor",
+    "wakatime",
+    "codex",
+    "claude"
+  ],
+  "license": "MIT"
+}
