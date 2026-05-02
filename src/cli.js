@@ -2,8 +2,9 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const pkg = require("../package.json");
 
-const VERSION = "0.1.0";
+const VERSION = pkg.version;
 const PLUGIN = `conductor/1.0.0 conductor-wakatime/${VERSION}`;
 const ROOT_DIR = path.dirname(__dirname);
 const LAUNCH_AGENT_LABEL = "com.conductor-wakatime.agent";
