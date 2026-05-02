@@ -7,8 +7,13 @@
   },
   "type": "commonjs",
   "scripts": {
+    "setup": "node ./bin/conductor-wakatime.js setup",
+    "install": "node ./bin/conductor-wakatime.js install",
+    "uninstall": "node ./bin/conductor-wakatime.js uninstall",
     "status": "node ./bin/conductor-wakatime.js status",
     "doctor": "node ./bin/conductor-wakatime.js doctor",
+    "track:once": "node ./bin/conductor-wakatime.js track-once",
+    "test:heartbeat": "node ./bin/conductor-wakatime.js test-heartbeat",
     "test": "node --test"
   },
   "keywords": [

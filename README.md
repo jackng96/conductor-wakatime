@@ -2,20 +2,15 @@
 
 WakaTime tracking for Conductor agent sessions.
 
-## Goal
-
-Track Conductor's local Codex and Claude activity from:
-
-```text
-~/Library/Application Support/com.conductor.app/conductor.db
-```
-
-First version will use a lightweight database tailer. Later versions can add a Codex stdio proxy for more precise real-time events.
-
 ## Commands
 
 ```bash
+npm run setup
+npm run install
 npm run status
 npm run doctor
+npm run track:once
+npm run test:heartbeat
 ```
 
+This reads Conductor events from `~/Library/Application Support/com.conductor.app/conductor.db` and sends WakaTime heartbeats with the plugin name `conductor-wakatime`.
