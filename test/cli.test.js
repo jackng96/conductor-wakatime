@@ -40,6 +40,7 @@ test("buildHeartbeatFromRow creates file heartbeat from tool input", () => {
     messageId: "msg-1",
     entity: "/Users/example/conductor/workspaces/app/seattle/src/index.ts",
     entityType: "file",
+    language: "TypeScript",
     isWrite: true,
     project: "app",
     projectFolder: "/Users/example/conductor/workspaces/app/seattle",
@@ -64,6 +65,7 @@ test("buildHeartbeatFromRow creates app heartbeat from result event", () => {
     messageId: "msg-2",
     entity: "Conductor",
     entityType: "app",
+    language: null,
     isWrite: false,
     project: "rag-testing",
     projectFolder: "/Users/example/conductor/workspaces/rag-testing/london",
@@ -79,6 +81,7 @@ test("buildWakatimeArgs includes Conductor plugin and event time", () => {
     entityType: "file",
     project: "app",
     projectFolder: "/tmp",
+    language: "JavaScript",
     isWrite: true,
     time: 1777625749.526,
   }, {
@@ -94,6 +97,10 @@ test("buildWakatimeArgs includes Conductor plugin and event time", () => {
   assert.deepEqual(args.slice(args.indexOf("--time"), args.indexOf("--time") + 2), [
     "--time",
     "1777625749.526",
+  ]);
+  assert.deepEqual(args.slice(args.indexOf("--language"), args.indexOf("--language") + 2), [
+    "--language",
+    "JavaScript",
   ]);
 });
 
@@ -115,4 +122,60 @@ test("isNewerThanState uses message id to break timestamp ties", () => {
     id: "msg-4",
     created_at: "2026-05-01T14:55:50.000Z",
   }, state), true);
+});
+
+test("buildHeartbeatsFromRow extracts every file tool use in a message", () => {
+  const row = {
+    id: "msg-5",
+    created_at: "2026-05-01T15:00:00.000Z",
+    agent_type: "codex",
+    repo_name: "app",
+    root_path: "/Users/example/Dev/app",
+    directory_name: "seattle",
+    branch: "feature/all-tools",
+    content: JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            name: "Read",
+            input: { file_path: "/Users/example/conductor/workspaces/app/seattle/src/index.ts" },
+          },
+          {
+            type: "tool_use",
+            name: "Edit",
+            input: { path: "/Users/example/conductor/workspaces/app/seattle/scripts/run.py" },
+          },
+        ],
+      },
+    }),
+  };
+
+  assert.deepEqual(cli.buildHeartbeatsFromRow(row), [
+    {
+      messageId: "msg-5:0",
+      entity: "/Users/example/conductor/workspaces/app/seattle/src/index.ts",
+      entityType: "file",
+      language: "TypeScript",
+      isWrite: false,
+      project: "app",
+      projectFolder: "/Users/example/conductor/workspaces/app/seattle",
+      time: 1777647600,
+      agentType: "codex",
+      branch: "feature/all-tools",
+    },
+    {
+      messageId: "msg-5:1",
+      entity: "/Users/example/conductor/workspaces/app/seattle/scripts/run.py",
+      entityType: "file",
+      language: "Python",
+      isWrite: true,
+      project: "app",
+      projectFolder: "/Users/example/conductor/workspaces/app/seattle",
+      time: 1777647600,
+      agentType: "codex",
+      branch: "feature/all-tools",
+    },
+  ]);
 });

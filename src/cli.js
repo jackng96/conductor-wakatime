@@ -10,6 +10,32 @@ const LAUNCH_AGENT_LABEL = "com.conductor-wakatime.agent";
 const DEFAULT_POLL_SECONDS = 30;
 const WRITE_TOOLS = new Set(["Edit", "Write", "MultiEdit"]);
 const FILE_TOOLS = new Set(["Read", "Edit", "Write", "MultiEdit", "Grep", "Glob"]);
+const LANGUAGE_BY_EXTENSION = new Map([
+  [".c", "C"],
+  [".cc", "C++"],
+  [".cpp", "C++"],
+  [".cs", "C#"],
+  [".css", "CSS"],
+  [".go", "Go"],
+  [".html", "HTML"],
+  [".java", "Java"],
+  [".js", "JavaScript"],
+  [".jsx", "JavaScript"],
+  [".json", "JSON"],
+  [".md", "Markdown"],
+  [".php", "PHP"],
+  [".py", "Python"],
+  [".rb", "Ruby"],
+  [".rs", "Rust"],
+  [".sh", "Bash"],
+  [".sql", "SQL"],
+  [".swift", "Swift"],
+  [".ts", "TypeScript"],
+  [".tsx", "TypeScript"],
+  [".vue", "Vue"],
+  [".yaml", "YAML"],
+  [".yml", "YAML"],
+]);
 
 function resolvePaths(options = {}) {
   const homeDir = options.homeDir || os.homedir();
@@ -61,6 +87,14 @@ function toUnixTime(value) {
   return timestamp / 1000;
 }
 
+function detectLanguage(filePath) {
+  if (!filePath) {
+    return null;
+  }
+
+  return LANGUAGE_BY_EXTENSION.get(path.extname(filePath).toLowerCase()) || null;
+}
+
 function deriveWorkspaceFolder(row) {
   if (row.file_path) {
     const marker = `${path.sep}conductor${path.sep}workspaces${path.sep}`;
@@ -90,6 +124,7 @@ function buildHeartbeatFromRow(row) {
     messageId: row.id,
     entity: hasTrackableFile ? row.file_path : "Conductor",
     entityType: hasTrackableFile ? "file" : "app",
+    language: hasTrackableFile ? detectLanguage(row.file_path) : null,
     isWrite: hasTrackableFile ? WRITE_TOOLS.has(row.tool_name) : false,
     project,
     projectFolder: deriveWorkspaceFolder(row),
@@ -97,6 +132,61 @@ function buildHeartbeatFromRow(row) {
     agentType: row.agent_type || null,
     branch: row.branch || null,
   };
+}
+
+function getToolFilePath(toolUse) {
+  const input = toolUse && toolUse.input;
+
+  if (!input || typeof input !== "object") {
+    return undefined;
+  }
+
+  return input.file_path || input.path || input.filePath || input.target_file;
+}
+
+function parseContent(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "object") {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function buildHeartbeatsFromRow(row) {
+  const content = parseContent(row.content);
+  const messageContent = content && content.message && Array.isArray(content.message.content)
+    ? content.message.content
+    : [];
+  const heartbeats = [];
+
+  for (const [index, item] of messageContent.entries()) {
+    if (!item || item.type !== "tool_use" || !FILE_TOOLS.has(item.name)) {
+      continue;
+    }
+
+    const filePath = getToolFilePath(item);
+
+    if (!filePath) {
+      continue;
+    }
+
+    heartbeats.push(buildHeartbeatFromRow({
+      ...row,
+      id: `${row.id}:${index}`,
+      tool_name: item.name,
+      file_path: filePath,
+    }));
+  }
+
+  return heartbeats.length > 0 ? heartbeats : [buildHeartbeatFromRow(row)];
 }
 
 function buildWakatimeArgs(heartbeat, paths) {
@@ -127,6 +217,10 @@ function buildWakatimeArgs(heartbeat, paths) {
     args.push("--project", heartbeat.project);
   }
 
+  if (heartbeat.language) {
+    args.push("--language", heartbeat.language);
+  }
+
   if (heartbeat.time) {
     args.push("--time", String(heartbeat.time));
   }
@@ -150,6 +244,7 @@ function buildRowsSql({ where = "", order = "desc", limit = 200 } = {}) {
 select
   sm.id,
   sm.created_at,
+  sm.content,
   s.agent_type,
   s.model,
   w.directory_name,
@@ -173,6 +268,11 @@ where json_valid(sm.content)
   and (
     json_extract(sm.content,'$.type') = 'result'
     or json_extract(sm.content,'$.message.content[0].type') = 'tool_use'
+    or exists (
+      select 1
+      from json_each(sm.content, '$.message.content') as item
+      where json_extract(item.value, '$.type') = 'tool_use'
+    )
   )
   ${where}
 order by sm.created_at ${safeOrder}, sm.id ${safeOrder}
@@ -218,7 +318,7 @@ function queryRowsAfterState(paths, state, limit = 200) {
 }
 
 function selectHeartbeat(rows) {
-  const heartbeats = rows.map(buildHeartbeatFromRow);
+  const heartbeats = rows.flatMap(buildHeartbeatsFromRow);
   const fileHeartbeat = heartbeats.find((heartbeat) => heartbeat.entityType === "file" && fs.existsSync(heartbeat.entity));
 
   return fileHeartbeat || heartbeats.find((heartbeat) => heartbeat.entityType === "app") || null;
@@ -301,13 +401,15 @@ function trackOnce(options = {}) {
     }
 
     for (const row of rows) {
-      const heartbeat = buildHeartbeatFromRow(row);
+      const heartbeats = buildHeartbeatsFromRow(row);
 
-      if (heartbeat.entityType === "file" && !fs.existsSync(heartbeat.entity)) {
-        skipped.push({ id: row.id, reason: "file no longer exists", entity: heartbeat.entity });
-      } else {
-        sendHeartbeat(heartbeat, paths);
-        sent.push(heartbeat);
+      for (const heartbeat of heartbeats) {
+        if (heartbeat.entityType === "file" && !fs.existsSync(heartbeat.entity)) {
+          skipped.push({ id: heartbeat.messageId, reason: "file no longer exists", entity: heartbeat.entity });
+        } else {
+          sendHeartbeat(heartbeat, paths);
+          sent.push(heartbeat);
+        }
       }
 
       state = {
@@ -540,7 +642,9 @@ module.exports = {
   resolvePaths,
   getChecks,
   validate,
+  detectLanguage,
   buildHeartbeatFromRow,
+  buildHeartbeatsFromRow,
   buildWakatimeArgs,
   queryRecentRows,
   queryRowsAfterState,
