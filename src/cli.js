@@ -10,7 +10,7 @@ const ROOT_DIR = path.dirname(__dirname);
 const LAUNCH_AGENT_LABEL = "com.conductor-wakatime.agent";
 const DEFAULT_POLL_SECONDS = 30;
 const WRITE_TOOLS = new Set(["Edit", "Write", "MultiEdit"]);
-const FILE_TOOLS = new Set(["Read", "Edit", "Write", "MultiEdit", "Grep", "Glob"]);
+const FILE_TOOLS = new Set(["Read", "Edit", "Write", "MultiEdit"]);
 const LANGUAGE_BY_EXTENSION = new Map([
   [".c", "C"],
   [".cc", "C++"],
@@ -31,6 +31,7 @@ const LANGUAGE_BY_EXTENSION = new Map([
   [".sh", "Bash"],
   [".sql", "SQL"],
   [".swift", "Swift"],
+  [".toml", "TOML"],
   [".ts", "TypeScript"],
   [".tsx", "TypeScript"],
   [".vue", "Vue"],
@@ -183,7 +184,7 @@ function buildHeartbeatsFromRow(row) {
     }));
   }
 
-  return heartbeats.length > 0 ? heartbeats : [buildHeartbeatFromRow(row)];
+  return heartbeats;
 }
 
 function buildWakatimeArgs(heartbeat, paths) {

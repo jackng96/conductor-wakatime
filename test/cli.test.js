@@ -51,7 +51,11 @@ test("buildHeartbeatFromRow creates file heartbeat from tool input", () => {
   });
 });
 
-test("buildHeartbeatFromRow creates app heartbeat from result event", () => {
+test("detectLanguage maps TOML files explicitly", () => {
+  assert.equal(cli.detectLanguage("/tmp/fly.api.toml"), "TOML");
+});
+
+test("buildHeartbeatsFromRow skips non-file result events", () => {
   const row = {
     id: "msg-2",
     created_at: "2026-05-01T14:56:20.482Z",
@@ -62,18 +66,7 @@ test("buildHeartbeatFromRow creates app heartbeat from result event", () => {
     directory_name: "london",
   };
 
-  assert.deepEqual(cli.buildHeartbeatFromRow(row), {
-    messageId: "msg-2",
-    entity: "Conductor",
-    entityType: "app",
-    language: null,
-    isWrite: false,
-    project: "rag-testing",
-    projectFolder: "/Users/example/Dev/rag-testing",
-    time: 1777647380.482,
-    agentType: "claude",
-    branch: null,
-  });
+  assert.deepEqual(cli.buildHeartbeatsFromRow(row), []);
 });
 
 test("buildWakatimeArgs includes Conductor plugin and event time", () => {
@@ -179,4 +172,34 @@ test("buildHeartbeatsFromRow extracts every file tool use in a message", () => {
       branch: "feature/all-tools",
     },
   ]);
+});
+
+test("buildHeartbeatsFromRow skips non-file tool uses", () => {
+  const row = {
+    id: "msg-6",
+    created_at: "2026-05-01T15:00:00.000Z",
+    agent_type: "codex",
+    repo_name: "app",
+    root_path: "/Users/example/Dev/app",
+    directory_name: "seattle",
+    content: JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "tool_use",
+            name: "Bash",
+            input: { command: "npm test" },
+          },
+          {
+            type: "tool_use",
+            name: "Grep",
+            input: { path: "/Users/example/conductor/workspaces/app/seattle" },
+          },
+        ],
+      },
+    }),
+  };
+
+  assert.deepEqual(cli.buildHeartbeatsFromRow(row), []);
 });
