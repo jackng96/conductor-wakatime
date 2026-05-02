@@ -69,3 +69,7 @@ This reads Conductor events from `~/Library/Application Support/com.conductor.ap
 ## Troubleshooting
 
 If `conductor-wakatime install` fails, the error will name the missing dependency: Conductor database, WakaTime CLI, or WakaTime config.
+
+## License
+
+MIT
