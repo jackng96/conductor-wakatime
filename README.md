@@ -16,12 +16,6 @@ WakaTime tracking for Conductor agent sessions on macOS.
 npm install -g conductor-wakatime
 ```
 
-To install directly from GitHub:
-
-```bash
-npm install -g git+https://github.com/jackng96/conductor-wakatime.git
-```
-
 ## WakaTime Setup
 
 You need a WakaTime account, API key, config file, and CLI before starting the tracker.
