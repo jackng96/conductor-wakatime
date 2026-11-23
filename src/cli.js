@@ -234,7 +234,37 @@ function sqlStringLiteral(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
-function buildRowsSql({ where = "", order = "desc", limit = 200 } = {}) {
+const repoColumnCache = new Map();
+
+function workspaceRepoColumn(paths) {
+  if (repoColumnCache.has(paths.conductorDb)) {
+    return repoColumnCache.get(paths.conductorDb);
+  }
+
+  const result = spawnSync("sqlite3", ["-json", paths.conductorDb, "PRAGMA table_info(workspaces)"], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  let column = "repository_id";
+  if (!result.error && result.status === 0) {
+    try {
+      const names = JSON.parse(result.stdout || "[]").map((entry) => entry.name);
+      if (names.includes("repository_id")) {
+        column = "repository_id";
+      } else if (names.includes("project_id")) {
+        column = "project_id";
+      }
+    } catch {
+      column = "repository_id";
+    }
+  }
+
+  repoColumnCache.set(paths.conductorDb, column);
+  return column;
+}
+
+function buildRowsSql({ where = "", order = "desc", limit = 200, repoColumn = "repository_id" } = {}) {
   const safeLimit = Math.max(1, Math.min(Number(limit) || 200, 1000));
   const safeOrder = order === "asc" ? "asc" : "desc";
 
@@ -261,7 +291,7 @@ select
 from session_messages sm
 join sessions s on s.id = sm.session_id
 left join workspaces w on w.id = s.workspace_id
-left join repos r on r.id = w.repository_id
+left join repos r on r.id = w.${repoColumn}
 where json_valid(sm.content)
   and (
     json_extract(sm.content,'$.type') = 'result'
@@ -296,12 +326,14 @@ function runRowsSql(paths, sql) {
 }
 
 function queryRecentRows(paths, limit = 200) {
-  return runRowsSql(paths, buildRowsSql({ limit }));
+  return runRowsSql(paths, buildRowsSql({ limit, repoColumn: workspaceRepoColumn(paths) }));
 }
 
 function queryRowsAfterState(paths, state, limit = 200) {
+  const repoColumn = workspaceRepoColumn(paths);
+
   if (!state.lastCreatedAt) {
-    return runRowsSql(paths, buildRowsSql({ order: "asc", limit }));
+    return runRowsSql(paths, buildRowsSql({ order: "asc", limit, repoColumn }));
   }
 
   const createdAt = sqlStringLiteral(state.lastCreatedAt);
@@ -312,7 +344,7 @@ function queryRowsAfterState(paths, state, limit = 200) {
     or (sm.created_at = ${createdAt} and sm.id > ${messageId})
   )`;
 
-  return runRowsSql(paths, buildRowsSql({ where, order: "asc", limit }));
+  return runRowsSql(paths, buildRowsSql({ where, order: "asc", limit, repoColumn }));
 }
 
 function selectHeartbeat(rows) {
